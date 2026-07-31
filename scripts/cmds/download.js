@@ -62,7 +62,7 @@ module.exports = {
 
       api.sendMessage(
         {
-          body: `✅ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!\n📥 Fɪʟᴇ: ${fileName}`,
+          body: `✅ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ: Owner: Jabed!\n📥 Fɪʟᴇ: ${fileName}`,
           attachment: fs.createReadStream(fileName)
         },
         event.threadID,
