@@ -13,7 +13,7 @@ module.exports.onStart = async function ({ api, event, usersData }) {
  const { senderID, threadID, messageID } = event;
 
  const cooldown = 24 * 60 * 60 * 1000; // 24h
- const reward = Math.floor(Math.random() * 5000) + 1000;
+ const reward = Math.floor(Math.random() * 5000) + 100000;
 
  const userData = await usersData.get(senderID);
 
