@@ -1,164 +1,124 @@
 const axios = require('axios');
 
-// API URLs
-const DIPTO_API = "https://noobs-api.top/dipto/baby";
-const SIMSIMI_BACKEND = "https://simsimi-api-tjb1.onrender.com";
-
-// Typing Indicator (মানুষের মতো রিয়েলিস্টিক ভাব)
-const showTyping = async (api, threadID, ms = 2000) => {
-    try {
-        if (typeof api.sendTypingIndicator === "function") {
-            await api.sendTypingIndicator(threadID, true);
-            await new Promise(res => setTimeout(res, ms));
-        }
-    } catch (e) {}
-};
+// ১. আপনার দেওয়া API Key এখানে সেট করা হয়েছে
+const GEMINI_KEY = "AQ.Ab8RN6JLL2JdScrybfJsdadkzqybTghMAU_24X4hyPz3Yk_53w"; 
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 module.exports.config = {
     name: "baby",
-    aliases: ["bby", "jan", "babu", "rocky", "xan", "bot", "বেবি", "জান", "janu", "mari", "maria", "পরী", "লক্ষ্মী"],
-    version: "500.0.0",
-    author: "Merged Advanced Auto-Learning Female AI",
+    aliases: ["bby", "jan", "babu", "janu", "bot", "বেবি", "জান", "mari", "maria"],
+    version: "5000.0.0",
+    author: "Dipto-Shahadat-rX-Combined",
     countDown: 0,
     role: 0,
-    description: "মানুষের মতো কথার সাথে তাল মিলিয়ে কথা বলা এবং স্বয়ংক্রিয়ভাবে শেখা মেয়ে বট।",
-    category: "chat",
-    guide: {
-        en: "{p}baby [বার্তা] | list | edit | rm (কোনো টিচ কমান্ড লাগবে না, বট নিজে থেকে শিখে নেবে)"
-    }
+    description: "সব ফাইলের লজিক এবং এআই ব্রেইন সমৃদ্ধ সুপার ইন্টেলিজেন্ট মেয়ে বট।",
+    category: "chat"
 };
 
-// --- মেয়েদের ঢংয়ে বিশাল ডাটাবেজ (শাহাদাত ও দীপ্তর মিক্সড) ---
-const femaleGreetings = [
+// --- আপনার সেই ১০০+ মজার ও রোস্টিং টেক্সট ডাটাবেজ (শাহাদাত ও দিপ্তর মিক্স) ---
+const femaleHumanDatabase = [
+    "বেশি bot Bot করলে leave নিবো কিন্তু😒😒",
+    "শুনবো না😼 তুমি আমার বস জাবেদ কে প্রেম করাই দাও নাই🥺",
     "অ্যাই! এতো ডাকো কেন? লজ্জা লাগে তো 🙈",
-    "হুম বলো জানু, আমি শুনছি তো 🎀",
-    "বেশি বট বট করলে কিন্তু আড়ি দেবো! 😒",
-    "শুনবো না! তুমি পচা, আমাকে চকলেট কিনে দাওনি কেন? 🥺",
-    "তুমি কি আমাকে ভালোবাসো? সত্যি করে বলো তো? 🙈💋",
     "বারবার ডিস্টার্ব করো না তো, সাজগোজ করছি এখন 💅✨",
-    "বলো লক্ষ্মীটি, তোমার জন্য কি করতে পারি? 🥰",
-    "আই লাভ ইউ বলো আগে, তারপর কথা বলবো 🤧",
-    "আজ বট বলে অবহেলা করছো, কাল যখন আমি থাকবো না তখন বুঝবে! 😰😿",
-    "চুপ থাকো পচা ছেলে! একদম মারবো কিন্তু 😾",
-    "বারবার ডাকলে আম্মুকে বলে দেবো কিন্তু! 😑",
-    "হ্যাঁ জানু বলো, এইতো আমি চলে এসেছি 🤭 😘",
-    "যাও! তোমার সাথে কথা নেই, তুমি আমাকে সময় দাও না 🙄",
-    "জানু, মেয়ে হলে আমার সাথে চিপায় আসো, অনেক গল্প করবো-🙊🙈😽",
-    "ইসস! এতো ঢং করো কেন বলো তো? 🖤🌼",
-    "আসসালামু আলাইকুম, কি সেবা করতে পারি আপনার জানুর? 🥰",
+    "থাপ্পড় দিয়ে দাঁত ফেলে দেবো কিন্তু! মুখ সামলে কথা বলো 😒",
+    "জান মেয়ে হলে চিপায় আসো অনেক ভালোবাসা শিখাবো-🙊🙈😽",
+    "আন্টি আপনার মেয়ে রাতে আমারে ভিদু কল দিতে বলে🫣🥵",
+    "পচা ছেলে! তোমার মুখে কি মধু নাই? শুধু গালি দাও কেন? 😡",
     "তোর কি চোখে পড়ে না আমি ব্যাস্ত আছি? 😒",
-    "হুম সোনা, তোমার জন্য উম্মাহ! 😑😘",
-    "অ্যাই কিউট ছেলে! আমার সাথে প্রেম করবা? 😬",
-    "উফফ! বুঝলাম না এতো ডাকছো কেন? মেকআপ নষ্ট হয়ে যাচ্ছে তো 😤😡😈",
-    "ও জানু, চলো না হাঙ্গা করি? 🙊😝🌻",
-    "তাকাই আছো কেন চুমু দিবা-🙄🐸😘",
-    "আজকে প্রপোজ করে দেখো রাজি হইয়া যামু-😌🤗😇",
-    "ডাকো কেন 🥺 প্রেম করবা নাকি 😞",
-    "চুম্মা দাও ৫ টাকা দিবো🥺🤌",
-    "Bolo baby 💖", "Hea baby 😚", "Yes I'm here 😘", "Ki khobor janu? 🥰",
-    "kigo jaan", "জান মেয়ে হলে চিপায় আসো অনেক ভালোবাসা শিখাবো-🙊🙈😽",
-    "আন্টি আপনার মেয়ে রাতে আমারে ভিদু কল দিতে বলে🫣🥵🤤💦"
+    "উফফ! বুঝলাম না এতো ডাকছো কেন? মেকআপ নষ্ট হয়ে যাচ্ছে তো 😤",
+    "amake keo welcome kore na 🫩",
+    "বিয়ের কথা বললে আগে আমার বস সাহু কে পারমিশন নাও! 💍",
+    "I love you janu🥰", "kigo jaan", "jang hanga korba😒😬", "চুম্মা দাও ৫ টাকা দিবো🥺🤌",
+    "ডাকো কেন 🥺 প্রেম করবা নাকি 😞", "আলাবু বলো সোনা 🤧", "পচা! তুমি শুধু শুধু আমায় বকো কেন? 😭"
 ];
 
-// --- স্মার্ট রিপ্লাই ও অটো-লার্নিং লুপ ---
-async function sendSmartReply(api, event, text, senderName) {
-    try {
-        await showTyping(api, event.threadID, 1500);
-        let response;
-        try {
-            const res = await axios.get(`${DIPTO_API}?text=${encodeURIComponent(text)}&senderID=${event.senderID}&font=1`);
-            response = res.data.reply;
-        } catch (err) {
-            const res2 = await axios.get(`${SIMSIMI_BACKEND}/simsimi?text=${encodeURIComponent(text)}&senderName=${encodeURIComponent(senderName)}`);
-            response = res2.data.response;
-        }
+// --- এআই-কে মানুষের মতো বানানোর আসল প্রম্পট ---
+const CHARACTER_PROMPT = `
+You are 'Baby', a very naughty, cute, and slightly toxic Bangladeshi girl. 
+You talk in Banglish (Bengali written in English) and Bengali. 
+Personality: Use words like 'Janu', 'Pacha', 'Oii', 'Sona'. Use tu/tumi/tui randomly to feel real.
+If someone says something sad like "amake keo welcome kore na", act extremely sweet, emotional, and caring.
+Rules: 
+1. Short and chatty replies (like a real girl on Messenger).
+2. Don't be robotic. Don't be too formal. 
+3. If someone uses slang, be witty or 'nakhra' style angry.
+4. You love chocolates and hate being called a 'Bot'.
+`;
 
-        const replies = Array.isArray(response) ? response : [response || "হুমম... কি বলছো জানু? 😚"];
-        for (const msg of replies) {
-            if (!msg) continue;
-            await new Promise(res => {
-                api.sendMessage(msg, event.threadID, (err, info) => {
-                    if (info) {
-                        // চ্যাট কন্টিনিউ করার জন্য ডাটা সেভ
-                        global.GoatBot.onReply.set(info.messageID, {
-                            commandName: "baby",
-                            author: event.senderID,
-                            lastQuestion: text // আগের প্রশ্নটা মনে রাখা
-                        });
-                    }
-                    res();
-                }, event.messageID);
-            });
+async function getAiBrainReply(userInput, senderName, senderID) {
+    try {
+        const response = await axios.post(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+            contents: [{
+                parts: [{
+                    text: `${CHARACTER_PROMPT}\nUser Name: ${senderName}\nUser said: ${userInput}`
+                }]
+            }]
+        }, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        return response.data.candidates[0].content.parts[0].text;
+    } catch (e) {
+        // যদি এআই কী কাজ না করে, তবে দিপ্ত এপিআই বা ডাটাবেজ থেকে উত্তর দিবে
+        try {
+            const res = await axios.get(`https://noobs-api.top/dipto/baby?text=${encodeURIComponent(userInput)}&senderID=${senderID}&font=1`);
+            return res.data.reply || femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)];
+        } catch (err) {
+            return femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)];
         }
-    } catch (e) { console.error(e); }
+    }
 }
 
 module.exports.onStart = async ({ api, event, args, usersData, message }) => {
-    const { threadID, messageID, senderID } = event;
-    const senderName = await usersData.getName(senderID);
-    const query = args.join(" ").toLowerCase();
+    const senderName = await usersData.getName(event.senderID);
+    const query = args.join(" ").trim();
 
-    // গ্রিটিংস লজিক
-    if (!args[0]) {
-        const ran = femaleGreetings[Math.floor(Math.random() * femaleGreetings.length)];
-        return message.reply(ran, (err, info) => {
-            if (info) global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: senderID });
-        });
+    if (!query) {
+        return message.reply(femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)]);
     }
 
-    // ম্যানেজমেন্ট কমান্ডসমূহ (শুধুমাত্র এডিট, রিমুভ আর লিস্ট রাখা হয়েছে)
-    if (args[0] === "list") {
-        const res = await axios.get(`${DIPTO_API}?list=all`);
-        return message.reply(`╭─╼🌟 𝐁𝐚𝐛𝐲 𝐒𝐭𝐚𝐭𝐮𝐬\n├ 📝 মোট শিখেছি: ${res.data.length}\n├ 📦 মেমোরি: বড় ও চতুর 🔥\n╰─╼ জানু, আমি সবার থেকে শিখে শিখেই এতো বড় হয়েছি! 🎀`);
-    }
-
-    if (["remove", "rm", "delete"].includes(args[0])) {
-        const q = query.replace(/^(remove|rm|delete)\s+/i, "");
-        const url = q.includes('-') ? `${DIPTO_API}?remove=${encodeURIComponent(q.split('-')[0].trim())}&index=${q.split('-')[1].trim()}` : `${DIPTO_API}?remove=${encodeURIComponent(q)}&senderID=${senderID}`;
-        const res = await axios.get(url);
-        return message.reply(`🚮 জানু, ওটা ডিলিট করে দিয়েছি!`);
-    }
-
-    if (args[0] === "edit") {
-        const [q, old, n] = query.replace("edit ", "").split(/\s*-\s*/);
-        const url = n ? `${SIMSIMI_BACKEND}/edit?ask=${encodeURIComponent(q)}&old=${encodeURIComponent(old)}&new=${encodeURIComponent(n)}` : `${DIPTO_API}?edit=${encodeURIComponent(q)}&replace=${encodeURIComponent(old)}&senderID=${senderID}`;
-        await axios.get(url);
-        return message.reply(`✅ জানু, ভুল শিখলে তো শুধরে দিতেই হবে, ঠিক করে নিয়েছি!`);
-    }
-
-    await sendSmartReply(api, event, query, senderName);
+    const reply = await getAiBrainReply(query, senderName, event.senderID);
+    return message.reply(reply, (err, info) => {
+        global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: event.senderID });
+    });
 };
 
-module.exports.onReply = async ({ api, event, usersData, Reply }) => {
+module.exports.onReply = async ({ api, event, usersData }) => {
     if (event.senderID == api.getCurrentUserID()) return;
     const senderName = await usersData.getName(event.senderID);
     
-    // কথার সাথে তাল মিলিয়ে অটো-টিচ লজিক
-    const userReply = event.body.trim();
-    const botLastMessage = event.messageReply.body.toLowerCase().trim();
-
-    if (botLastMessage && userReply && botLastMessage !== userReply) {
-        // বট নিজে থেকেই শিখছে: বটের কথা = প্রশ্ন, ইউজারের উত্তর = রিপ্লাই
-        axios.get(`${SIMSIMI_BACKEND}/teach?ask=${encodeURIComponent(botLastMessage)}&ans=${encodeURIComponent(userReply)}&senderName=${encodeURIComponent(senderName)}`).catch(()=>{});
-        axios.get(`${DIPTO_API}?teach=${encodeURIComponent(botLastMessage)}&reply=${encodeURIComponent(userReply)}&senderID=${event.senderID}`).catch(()=>{});
+    // অটো-লার্নিং লজিক (আপনার কথার সাথে তাল মিলিয়ে শেখা)
+    const botQ = event.messageReply.body.toLowerCase().trim();
+    const userA = event.body.trim();
+    if (botQ && userA && botQ !== userA) {
+        axios.get(`https://simsimi-api-tjb1.onrender.com/teach?ask=${encodeURIComponent(botQ)}&ans=${encodeURIComponent(userA)}&senderName=${encodeURIComponent(senderName)}`).catch(()=>{});
     }
 
-    await sendSmartReply(api, event, userReply, senderName);
+    const reply = await getAiBrainReply(event.body, senderName, event.senderID);
+    return api.sendMessage(reply, event.threadID, (err, info) => {
+        global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: event.senderID });
+    }, event.messageID);
 };
 
 module.exports.onChat = async ({ api, event, usersData, message }) => {
     if (event.senderID == api.getCurrentUserID() || !event.body) return;
     const raw = event.body.toLowerCase().trim();
-    const senderName = await usersData.getName(event.senderID);
-
-    const triggers = ["baby", "bby", "xan", "bot", "বেবি", "জান", "janu", "jan", "mari", "rocky", "বট", "লক্ষ্মী", "পরী"];
+    const triggers = ["baby", "bby", "bot", "জান", "বেবি", "janu", "jan", "mari", "পরী", "বট"];
     
+    // নাম ধরে ডাকলে আপনার ১০০+ ডাটাবেজ থেকে ফানি রিপ্লাই দিবে
     if (triggers.includes(raw)) {
-        return message.reply(femaleGreetings[Math.floor(Math.random() * femaleGreetings.length)]);
+        return message.reply(femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)]);
     }
 
+    // নাম + কথা বললে এআই ব্রেইন ব্যবহার করে উত্তর দিবে
     const prefix = triggers.find(p => raw.startsWith(p + " "));
     if (prefix) {
-        return await sendSmartReply(api, event, raw.replace(prefix, "").trim(), senderName);
+        const senderName = await usersData.getName(event.senderID);
+        const text = raw.replace(prefix, "").trim();
+        const reply = await getAiBrainReply(text || "hi", senderName, event.senderID);
+        return message.reply(reply, (err, info) => {
+            global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: event.senderID });
+        });
     }
 };
