@@ -1,71 +1,68 @@
 const axios = require('axios');
 
 // ১. আপনার দেওয়া API Key এখানে সেট করা হয়েছে
-const GEMINI_KEY = "AQ.Ab8RN6JLL2JdScrybfJsdadkzqybTghMAU_24X4hyPz3Yk_53w"; 
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_KEY = "AQ.Ab8RN6J5kR0qRhsutjZhRtxPSKr5On7tcaqP7xc0q4ZhREfGew"; 
 
 module.exports.config = {
     name: "baby",
     aliases: ["bby", "jan", "babu", "janu", "bot", "বেবি", "জান", "mari", "maria"],
-    version: "5000.0.0",
-    author: "Dipto-Shahadat-rX-Combined",
+    version: "25.0.0",
+    author: "Dipto-Shahadat-AI-Combined",
     countDown: 0,
     role: 0,
-    description: "সব ফাইলের লজিক এবং এআই ব্রেইন সমৃদ্ধ সুপার ইন্টেলিজেন্ট মেয়ে বট।",
+    description: "সব ফাইলের লজিক এবং গুগল এআই ব্রেইন সমৃদ্ধ সুপার ইন্টেলিজেন্ট মেয়ে বট।",
     category: "chat"
 };
 
-// --- আপনার সেই ১০০+ মজার ও রোস্টিং টেক্সট ডাটাবেজ (শাহাদাত ও দিপ্তর মিক্স) ---
-const femaleHumanDatabase = [
+// --- আপনার সেই ১০০+ মজার ও রোস্টিং টেক্সট ডাটাবেজ ---
+const humanDatabase = [
     "বেশি bot Bot করলে leave নিবো কিন্তু😒😒",
-    "শুনবো না😼 তুমি আমার বস জাবেদ কে প্রেম করাই দাও নাই🥺",
     "অ্যাই! এতো ডাকো কেন? লজ্জা লাগে তো 🙈",
     "বারবার ডিস্টার্ব করো না তো, সাজগোজ করছি এখন 💅✨",
-    "থাপ্পড় দিয়ে দাঁত ফেলে দেবো কিন্তু! মুখ সামলে কথা বলো 😒",
-    "জান মেয়ে হলে চিপায় আসো অনেক ভালোবাসা শিখাবো-🙊🙈😽",
-    "আন্টি আপনার মেয়ে রাতে আমারে ভিদু কল দিতে বলে🫣🥵",
     "পচা ছেলে! তোমার মুখে কি মধু নাই? শুধু গালি দাও কেন? 😡",
     "তোর কি চোখে পড়ে না আমি ব্যাস্ত আছি? 😒",
     "উফফ! বুঝলাম না এতো ডাকছো কেন? মেকআপ নষ্ট হয়ে যাচ্ছে তো 😤",
-    "amake keo welcome kore na 🫩",
+    "জান মেয়ে হলে চিপায় আসো অনেক ভালোবাসা শিখাবো-🙊🙈😽",
+    "ডাকো কেন 🥺 প্রেম করবা নাকি 😞",
+    "চুম্মা দাও ৫ টাকা দিবো🥺🤌",
     "বিয়ের কথা বললে আগে আমার বস সাহু কে পারমিশন নাও! 💍",
-    "I love you janu🥰", "kigo jaan", "jang hanga korba😒😬", "চুম্মা দাও ৫ টাকা দিবো🥺🤌",
-    "ডাকো কেন 🥺 প্রেম করবা নাকি 😞", "আলাবু বলো সোনা 🤧", "পচা! তুমি শুধু শুধু আমায় বকো কেন? 😭"
+    "I love you janu🥰", "kigo jaan", "jang hanga korba😒😬",
+    "আন্টি আপনার মেয়ে রাতে আমারে ভিদু কল দিতে বলে🫣🥵"
 ];
 
-// --- এআই-কে মানুষের মতো বানানোর আসল প্রম্পট ---
-const CHARACTER_PROMPT = `
-You are 'Baby', a very naughty, cute, and slightly toxic Bangladeshi girl. 
-You talk in Banglish (Bengali written in English) and Bengali. 
-Personality: Use words like 'Janu', 'Pacha', 'Oii', 'Sona'. Use tu/tumi/tui randomly to feel real.
-If someone says something sad like "amake keo welcome kore na", act extremely sweet, emotional, and caring.
-Rules: 
-1. Short and chatty replies (like a real girl on Messenger).
-2. Don't be robotic. Don't be too formal. 
-3. If someone uses slang, be witty or 'nakhra' style angry.
-4. You love chocolates and hate being called a 'Bot'.
+// --- এআই-কে মানুষের মতো এবং ইমোশনাল বানানোর প্রম্পট ---
+const CHARACTER_INSTRUCTION = `
+You are 'Baby', a smart, cute, and emotional girl from Bangladesh. 
+Your personality is NOT robotic. You are a human girl chatting on Messenger.
+Language: Always respond in Bengali or Banglish (Bengali written in English).
+Context Rules: 
+1. If the user is sad or says "amake keo welcome kore na", respond with deep love and care. Say something like: "Orey jaan! Ke boleche kew welcome kore na? Ami achi to! Welcome sona! 🥺🎀✨".
+2. If the user is funny, be witty. If the user is rude, show 'nakhra' or attitude.
+3. NEVER repeat the user's question. Always give a real answer.
+4. Keep replies short, chatty, and use lots of emojis like 🥺, 🙈, 💋, ✨.
 `;
 
-async function getAiBrainReply(userInput, senderName, senderID) {
+async function getSuperAiReply(userInput, senderName, senderID) {
     try {
-        const response = await axios.post(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
-            contents: [{
-                parts: [{
-                    text: `${CHARACTER_PROMPT}\nUser Name: ${senderName}\nUser said: ${userInput}`
-                }]
-            }]
-        }, {
-            headers: { 'Content-Type': 'application/json' }
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+        const res = await axios.post(url, {
+            contents: [{ parts: [{ text: `${CHARACTER_INSTRUCTION}\nUser ${senderName}: ${userInput}` }] }]
         });
 
-        return response.data.candidates[0].content.parts[0].text;
+        let aiReply = res.data.candidates[0].content.parts[0].text.trim();
+
+        // Anti-Echo Logic: যদি এআই ভুল করে আপনার কথা রিপিট করে
+        if (aiReply.toLowerCase() === userInput.toLowerCase() || aiReply.length < 2) {
+            return humanDatabase[Math.floor(Math.random() * humanDatabase.length)];
+        }
+        return aiReply;
     } catch (e) {
-        // যদি এআই কী কাজ না করে, তবে দিপ্ত এপিআই বা ডাটাবেজ থেকে উত্তর দিবে
+        // ব্যাকআপ হিসেবে দিপ্ত এপিআই
         try {
             const res = await axios.get(`https://noobs-api.top/dipto/baby?text=${encodeURIComponent(userInput)}&senderID=${senderID}&font=1`);
-            return res.data.reply || femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)];
+            return res.data.reply || humanDatabase[Math.floor(Math.random() * humanDatabase.length)];
         } catch (err) {
-            return femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)];
+            return humanDatabase[Math.floor(Math.random() * humanDatabase.length)];
         }
     }
 }
@@ -75,10 +72,10 @@ module.exports.onStart = async ({ api, event, args, usersData, message }) => {
     const query = args.join(" ").trim();
 
     if (!query) {
-        return message.reply(femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)]);
+        return message.reply(humanDatabase[Math.floor(Math.random() * humanDatabase.length)]);
     }
 
-    const reply = await getAiBrainReply(query, senderName, event.senderID);
+    const reply = await getSuperAiReply(query, senderName, event.senderID);
     return message.reply(reply, (err, info) => {
         global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: event.senderID });
     });
@@ -88,14 +85,14 @@ module.exports.onReply = async ({ api, event, usersData }) => {
     if (event.senderID == api.getCurrentUserID()) return;
     const senderName = await usersData.getName(event.senderID);
     
-    // অটো-লার্নিং লজিক (আপনার কথার সাথে তাল মিলিয়ে শেখা)
+    // অটো-লার্নিং লজিক
     const botQ = event.messageReply.body.toLowerCase().trim();
     const userA = event.body.trim();
     if (botQ && userA && botQ !== userA) {
-        axios.get(`https://simsimi-api-tjb1.onrender.com/teach?ask=${encodeURIComponent(botQ)}&ans=${encodeURIComponent(userA)}&senderName=${encodeURIComponent(senderName)}`).catch(()=>{});
+        axios.get(`https://simsimi-api-tjb1.onrender.com/teach?ask=${encodeURIComponent(botQ)}&ans=${encodeURIComponent(userA)}`).catch(()=>{});
     }
 
-    const reply = await getAiBrainReply(event.body, senderName, event.senderID);
+    const reply = await getSuperAiReply(event.body, senderName, event.senderID);
     return api.sendMessage(reply, event.threadID, (err, info) => {
         global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: event.senderID });
     }, event.messageID);
@@ -104,19 +101,17 @@ module.exports.onReply = async ({ api, event, usersData }) => {
 module.exports.onChat = async ({ api, event, usersData, message }) => {
     if (event.senderID == api.getCurrentUserID() || !event.body) return;
     const raw = event.body.toLowerCase().trim();
-    const triggers = ["baby", "bby", "bot", "জান", "বেবি", "janu", "jan", "mari", "পরী", "বট"];
+    const triggers = ["baby", "bby", "bot", "জান", "বেবি", "janu", "jan", "mari"];
     
-    // নাম ধরে ডাকলে আপনার ১০০+ ডাটাবেজ থেকে ফানি রিপ্লাই দিবে
     if (triggers.includes(raw)) {
-        return message.reply(femaleHumanDatabase[Math.floor(Math.random() * femaleHumanDatabase.length)]);
+        return message.reply(humanDatabase[Math.floor(Math.random() * humanDatabase.length)]);
     }
 
-    // নাম + কথা বললে এআই ব্রেইন ব্যবহার করে উত্তর দিবে
     const prefix = triggers.find(p => raw.startsWith(p + " "));
     if (prefix) {
         const senderName = await usersData.getName(event.senderID);
         const text = raw.replace(prefix, "").trim();
-        const reply = await getAiBrainReply(text || "hi", senderName, event.senderID);
+        const reply = await getSuperAiReply(text || "hi", senderName, event.senderID);
         return message.reply(reply, (err, info) => {
             global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: event.senderID });
         });
