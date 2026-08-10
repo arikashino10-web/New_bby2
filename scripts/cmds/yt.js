@@ -451,4 +451,4 @@ async function fetchInfo(api, threadID, messageID, videoID, apiUrl, getLang) {
 		api.sendMessage(getLang("error", e.message || "Could not fetch info"), threadID, messageID);
 		fs.unlink(thumbPath).catch(() => {});
 	}
-                       }
+		}
