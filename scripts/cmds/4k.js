@@ -1,75 +1,52 @@
 const axios = require("axios");
-
-const mahmud = async () => {
-  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
-  return base.data.mahmud;
-};
-
-/**
-* @author MahMUD
-* @author: do not delete it
-*/
+const fs = require("fs-extra");
+const path = require("path");
+const sharp = require("sharp");
 
 module.exports = {
   config: {
     name: "4k",
-    version: "1.7",
-    author: "MahMUD",
-    countDown: 10,
+    version: "2.1.0",
+    author: "Arafat",
+    countDown: 5,
     role: 0,
-    category: "AI",
-    description: "Enhance or restore image quality using 4k AI.",
-    guide: {
-      en: "{pn} [url] or reply with image"
-    }
+    shortDescription: { en: "High Quality Image Enhancer" },
+    category: "image"
   },
 
-  onStart: async function ({ message, event, args }) {
-    
-    const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68); 
-    if (module.exports.config.author !== obfuscatedAuthor) {
-      return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID);
-    }
-    const startTime = Date.now();
-    let imgUrl;
+  onStart: async function ({ message, event, api }) {
+    const { messageReply, messageID, threadID } = event;
+    if (!messageReply?.attachments?.[0]?.url) return message.reply("❌ Please reply to an image.");
 
-    if (event.messageReply?.attachments?.[0]?.type === "photo") {
-      imgUrl = event.messageReply.attachments[0].url;
-    }
+    const imageUrl = messageReply.attachments[0].url;
+    const apiBase = "https://4k-v2.vercel.app"; 
 
-    else if (args[0]) {
-      imgUrl = args.join(" ");
-    }
-
-    if (!imgUrl) {
-      return message.reply("Baby, Please reply to an image or provide an image URL");
-    }
-  
-    const waitMsg = await message.reply("𝐋𝐨𝐚𝐝𝐢𝐧𝐠 𝟒𝐤 𝐢𝐦𝐚𝐠𝐞...𝐰𝐚𝐢𝐭 𝐛𝐚𝐛𝐲 <😘");
-    message.reaction("😘", event.messageID);
+    message.reaction("⚡", messageID);
+    const loadingMsg = await api.sendMessage("⚡ Enhancing...", threadID);
 
     try {
+      const response = await axios.get(`${apiBase}/api/enhance?url=${encodeURIComponent(imageUrl)}`);
+      const resultUrl = response.data.imageUrl;
+
+      if (!resultUrl) throw new Error("No URL");
+
+      const img = await axios.get(resultUrl, { responseType: "arraybuffer" });
+      const cacheDir = path.join(__dirname, "cache");
+      if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
       
-      const apiUrl = `${await mahmud()}/api/hd?imgUrl=${encodeURIComponent(imgUrl)}`;
+      const filePath = path.join(cacheDir, `hd_${Date.now()}.jpg`);
+      await sharp(Buffer.from(img.data)).jpeg({ quality: 100 }).toFile(filePath);
 
-      const res = await axios.get(apiUrl, { responseType: "stream" });
-      if (waitMsg?.messageID) message.unsend(waitMsg.messageID);
-
-      message.reaction("✅", event.messageID);
-
-      const processTime = ((Date.now() - startTime) / 1000).toFixed(2);
-
-      message.reply({
-        body: `✅ | 𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝟒𝐤 𝐢𝐦𝐚𝐠𝐞 𝐛𝐚𝐛𝐲`,
-        attachment: res.data
-      });
-
-    } catch (error) {
-  
-      if (waitMsg?.messageID) message.unsend(waitMsg.messageID);
-
-      message.reaction("❎", event.messageID);
-      message.reply(`🥹error baby, contact MahMUD.`);
+      api.unsendMessage(loadingMsg.messageID);
+      await message.reply({ attachment: fs.createReadStream(filePath) });
+      
+      message.reaction("✅", messageID);
+      
+      setTimeout(() => { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); }, 5000);
+    } catch (err) {
+      api.unsendMessage(loadingMsg.messageID);
+      message.reply("❌ Error! Could not enhance the image.");
+      message.reaction("💔", messageID);
     }
   }
 };
