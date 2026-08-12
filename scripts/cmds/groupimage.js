@@ -1,50 +1,47 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 const axios = require("axios");
 
 module.exports = {
   config: {
     name: "groupimage",
-    version: "1.1.0",
-    author: "Mohammad Akash",
-    countDown: 0,
-    role: 1, // অ্যাডমিন বা মডারেটরদের জন্য (চাওলে 0 করো)
+    aliases: ["groupimg", "grouppic"],
+    version: "1.2.0",
+    author: "Rasel Mahmud",
+    countDown: 5,
+    role: 0,
     shortDescription: "Change group photo",
-    longDescription: "রিপ্লাই দেওয়া ছবিটাকে গ্রুপ প্রোফাইল ছবিতে সেট করবে",
+    longDescription: "Set a replied image as the group profile photo.",
     category: "box",
-    guide: "{pn} (একটা ছবিতে রিপ্লাই দাও)"
+    guide: {
+      en: "{pn} (reply to an image)"
+    }
   },
 
-  onStart: async function ({ api, event }) {
+  onStart: async function ({ api, event, message }) {
+    const { threadID, type, messageReply } = event;
+
+    if (type !== "message_reply") {
+      return message.reply("Reply to an image to set it as the group photo.");
+    }
+
+    const photo = messageReply.attachments?.find(att => att.type === "photo");
+    if (!photo) {
+      return message.reply("The replied message has no image.");
+    }
+
+    const filePath = `${__dirname}/cache/groupimage_${threadID}.jpg`;
+
     try {
-      // ✅ প্রথমে চেক করবো রিপ্লাই আছে কিনা
-      if (event.type !== "message_reply") {
-        return api.sendMessage("❌ দয়া করে একটি ছবিতে রিপ্লাই দাও!", event.threadID, event.messageID);
-      }
-
-      // ✅ অ্যাটাচমেন্ট আছে কিনা
-      const attachments = event.messageReply.attachments;
-      if (!attachments || attachments.length === 0) {
-        return api.sendMessage("❌ রিপ্লাই করা মেসেজে কোনো ছবি পাওয়া যায়নি!", event.threadID, event.messageID);
-      }
-
-      // ✅ একাধিক ছবি দেওয়া থাকলে
-      if (attachments.length > 1) {
-        return api.sendMessage("⚠️ শুধু একটি ছবিতে রিপ্লাই দাও!", event.threadID, event.messageID);
-      }
-
-      // ✅ ডাউনলোড ও সেট করা
-      const imageURL = attachments[0].url;
-      const pathImg = __dirname + "/cache/groupimage.png";
-      const getData = (await axios.get(imageURL, { responseType: "arraybuffer" })).data;
-
-      fs.writeFileSync(pathImg, Buffer.from(getData, "utf-8"));
-      await api.changeGroupImage(fs.createReadStream(pathImg), event.threadID);
-      fs.unlinkSync(pathImg);
-
-      return api.sendMessage("✅ | গ্রুপ প্রোফাইল ছবি সফলভাবে পরিবর্তন হয়েছে!", event.threadID, event.messageID);
+      const { data } = await axios.get(photo.url, { responseType: "arraybuffer" });
+      await fs.outputFile(filePath, Buffer.from(data));
+      await api.changeGroupImage(fs.createReadStream(filePath), threadID);
+      message.reply("Group photo changed successfully.");
     } catch (error) {
-      console.error(error);
-      return api.sendMessage("⚠️ | ছবিটি সেট করা যায়নি, আবার চেষ্টা করো!", event.threadID, event.messageID);
+      console.error("[groupimage]", error);
+      const reason = error?.error || error?.errorDescription || error?.errorSummary || error?.message || JSON.stringify(error);
+      message.reply(`Failed to change the group photo.\nReason: ${reason}`);
+    } finally {
+      fs.remove(filePath).catch(() => {});
     }
   }
 };
